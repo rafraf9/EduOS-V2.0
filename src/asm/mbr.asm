@@ -55,6 +55,34 @@ AfterLoad:
 
         jmp .exit
     .cpuid_check:
+       pushfd   ;save flags
+       pushfd   ;store flags
+       xor dword[esp], 0x00200000
+       popfd    ;change eflags
+       pushfd   ;check if changes happened
+
+       pop eax
+       xor eax, [esp]
+       popfd
+       and eax, 0x00200000
+
+       cmp eax, 0
+       jne .check_msr
+
+       mov si, CPUID_ERROR_MSG
+       call print_string_16bit
+
+       jmp .enable_A20
+    .check_msr:
+        mov eax, 0x1
+        cpuid
+        test edx, 0x20
+        jne .exit
+
+        mov si, MSR_ERROR_MSG
+        call print_string_16bit
+    .enable_A20:
+
 
 .exit:
     ;infinite loop
@@ -75,7 +103,8 @@ drive_number db 0
 ;--------------------------------------------
 HELLO_MSG db "Hello OS", 0xa, 0xd, 0
 PCI_ERROR_MSG db "PCI not found", 0xa, 0xd, 0
-
+CPUID_ERROR_MSG db "CPUID not found", 0xa, 0xd, 0
+MSR_ERROR_MSG db "MSR not found", 0xa, 0xd, 0
 ;padding till end of sector
 times 446-($-$$) db 0
 ;Partitions
