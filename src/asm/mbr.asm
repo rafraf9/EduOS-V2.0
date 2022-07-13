@@ -82,7 +82,15 @@ AfterLoad:
         mov si, MSR_ERROR_MSG
         call print_string_16bit
     .enable_A20:
+        call enable_A20_16bit
+        cmp ax, 1
+        je .load_second_stage
 
+        mov si, A20_ERROR_MSG
+        call print_string_16bit
+        jmp .exit
+    .load_second_stage:
+        
 
 .exit:
     ;infinite loop
@@ -92,6 +100,7 @@ AfterLoad:
 ;Include section
 ;--------------------------------------------
 %include "src/asm/print_16bit.asm"
+%include "src/asm/A20.asm"
 
 ;--------------------------------------------
 ;Variable section
@@ -105,6 +114,7 @@ HELLO_MSG db "Hello OS", 0xa, 0xd, 0
 PCI_ERROR_MSG db "PCI not found", 0xa, 0xd, 0
 CPUID_ERROR_MSG db "CPUID not found", 0xa, 0xd, 0
 MSR_ERROR_MSG db "MSR not found", 0xa, 0xd, 0
+A20_ERROR_MSG db "cant enable A20", 0xa, 0xd, 0
 ;padding till end of sector
 times 446-($-$$) db 0
 ;Partitions
